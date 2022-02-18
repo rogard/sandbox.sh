@@ -5,30 +5,40 @@ help()
 {
    echo "Search inside pdf's first page."
    echo
-   echo "Syntax: pdf-search-1 [-h|t] directory pattern "
+   echo "Syntax: pdf-search-1.sh [-h|--help] directory pattern "
    echo "options:"
    echo "h     Print this Help."
-   echo "t     Output formatted as a table."
    echo "stdout:"
-   echo path filename found
+   echo path found
    echo
 }
 
-#printf "%s\n" "This script searches inside pdfs' first page,"
-#printf "%s\n" "and writes it to stdout using tab as the separator."
-#printf "%s\n"\
-#       "In what directory would you like to search?"
-#read str
-#echo "str=$str"
-#read -a ar <<< "$str"
+## https://stackoverflow.com/a/14203146/9243116
+POSITIONAL_ARGS=()
+while [[ $# -gt 0 ]]; do
+  case $1 in
+      -h|--help)
+          help
+          exit 0
+      ;;
+    -*|--*)
+      echo "Unknown option $1"
+      exit 1
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$1") # save positional arg
+      shift # past argument
+      ;;
+  esac
+done
+set -- "${POSITIONAL_ARGS[@]}"
+
 dir="$1"
 patt="$2"
 
-##printf "%s\n" "----"
-#
 find "$dir"/* -type f -name '*pdf'\
     | while IFS= read -r path;\
     do #id="${path##*/}";\
-       found=$(pdftotext -l 1 -f 1 "$path" - | grep -im1 "$patt");\
-       [[ -z "$found" ]] || printf "%s\t%s\n" "$path" "$found";\
+        found=$(pdftotext -l 1 -f 1 "$path" - | grep -im1 "$patt");\
+        [[ -z "$found" ]] || printf "%s\t%s\n" "$path" "$found";\
     done
