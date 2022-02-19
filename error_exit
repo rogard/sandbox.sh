@@ -1,0 +1,5 @@
+error_exit()
+{
+    echo "Exit: $1"
+    exit 1
+}
