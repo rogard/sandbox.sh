@@ -1,0 +1,26 @@
+# !/bin/bash
+
+root=".."
+identifiant="$root/identifiant"
+target_dir="$root/motif"
+pattern_exclude='@'
+
+[[ -d "$target_dir" ]] || mkdir "$target"
+
+printf "%s\n%s\n"\
+       "Ce programme màj $target"
+
+find "$target_dir" -maxdepth 1 -type f | while IFS= read path; do echo "Identifiants:">"$path"; done
+
+>"$info"
+
+find "$identifiant" -type f -empty\
+    | grep -v "$pattern_exclude"\
+    | while IFS= read -r path;\
+    do empty="${path##*/}";
+       dir=$(dirname "$path");
+       id="${dir##*/}"
+       target="$target_dir/$empty.md"
+       printf "%s\n" "[$id]($identifiant/$id)" | tee -a "$target"
+    done
+     #| sort | uniq | tee "$info"

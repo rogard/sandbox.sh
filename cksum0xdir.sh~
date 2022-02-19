@@ -1,0 +1,36 @@
+# !/bin/bash
+
+source "$(dirname "${BASH_SOURCE[0]}")/../error_exit"
+
+# https://stackoverflow.com/a/14203146/9243116
+POSITIONAL_ARGS=()
+while [[ $# -gt 0 ]]; do
+  case $1 in
+      -h|--help)
+          help
+          exit 0
+      ;;
+    -*|--*)
+      echo "Unknown option $1"
+      exit 1
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$1") # save positional arg
+      shift # past argument
+      ;;
+  esac
+done
+set -- "${POSITIONAL_ARGS[@]}"
+
+find_path="$1"
+
+find "$find_path" -type f | while IFS= read -r path;
+do
+    dir="$(dirname $path)"
+    file="$(basename $path)"
+    prefix="${file%.*}"
+    ext="${file##*.}"
+    mkdir "$dir/$prefix";\
+    cp ""$dir"/$file" ""$dir"/$prefix";\
+    mv ""$dir"/$file" "$trash/$file.trash";
+done

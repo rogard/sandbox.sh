@@ -2,16 +2,13 @@
 
 help()
 {
-    echo "Puts in target directory, "
-    echo "inventory of counts of empty files and within, "
-    echo "matching directories;"
-    echo "matches are saved using markdown links [directory](path to directory);"
-    echo "writes to stdout prexisting empty files in target directory (residue)."
-    echo 
-    echo "Syntax: empty-count-directory.sh [-h|--help] source_directory target_directory"
-    echo "options:"
-    echo "h     Print this Help."
-    echo
+    printf "%s %s %s %s\n\n"\
+           "Puts in target directory,"\
+           "inventory of count of empty files and within,"\
+           "matching directories;"\
+           "matches are saved using markdown links [directory](path to directory)."
+    printf "%s\n\n" "Syntax: empty-count-directory.sh [-h|--help] source_directory target_directory"
+    printf "%s\n%s\n" "options:" "h     Print this Help."
 }
 
 # https://stackoverflow.com/a/14203146/9243116
@@ -49,5 +46,4 @@ find "$source_dir" -mindepth 1 -type d\
        target="$target_dir/$empty_count.md"
        printf "%s\n" "[$id:]($identifiant_dir/$id)" > "$target"
     done
-
 echo "done"
