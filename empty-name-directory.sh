@@ -5,14 +5,17 @@ help()
     printf "%s %s\n%s\n%s\n%s\n\n" "Puts in target directory, "\
     "inventory of empty files and within, "\
     "matching directories;"\
-    "matches are saved using markdown links [basename of directory](path to directory);"\
+    "matches are saved using markdown links [basename of directory](../source_dir/basename of directory);"\
     "writes to stdout prexisting empty files in target directory (residue)."
     printf "%s\n%s\n%s\n"
     "Syntax: inventorempty.sh [-h|--help] source_directory target_directory"
     "options:"
     "h     Print this Help."
-    
 }
+
+# TODO
+# Lift assumption using ... ?
+#../source_dir/basename of directory
 
 # https://stackoverflow.com/a/14203146/9243116
 POSITIONAL_ARGS=()
@@ -48,7 +51,8 @@ do
     dir=$(dirname "$path")
     base=$(basename "$path")
     target="$target_dir/$base.md"
-    printf "%s\n" "[${dir##*/}]($dir)" >> "$target"
+    id="${dir##*/}"
+    printf "%s\n" "[$id](../$source_dir/$id)" >> "$target"
 done
 
 # residue=$(find "$target_dir" -type f -empty -print0) # BUG
