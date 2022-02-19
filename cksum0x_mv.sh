@@ -1,6 +1,5 @@
 #!/bin/bash
-# source "$(dirname "${BASH_SOURCE[0]}")/../error_exit"
-source_dir=$(dirname "${BASH_SOURCE[0]}")
+bin_dir=$(dirname "${BASH_SOURCE[0]}")
 
 help()
 {
@@ -8,7 +7,7 @@ help()
     echo "copies file to target/target.ext, "
     echo "moves file to file.trash."
     echo 
-    echo "Syntax: cksum0x_mv.sh [-h|--help] [-d|--dir] path"
+    echo "Syntax: cksum0x_mv.sh [-h|--help] path"
     echo "options:"
     echo "h     Print this Help."
     echo
@@ -35,11 +34,12 @@ done
 set -- "${POSITIONAL_ARGS[@]}"
 
 dir=$(dirname "$1")
-id=$("$source_dir"/cksum0x.sh "$1" | awk 'BEGIN{FS=" ";}{print $2;}')
+id=$("$bin_dir"/cksum0x.sh "$1" | awk 'BEGIN{FS=" ";}{print $2;}')
 target_dir="$dir/$id"
 base=$(basename "$1")
 ext="${base#*.}"
 target_file="$id.$ext"
+echo "$target_file"
 [[ -d "$target_dir" ]] || mkdir "$target_dir"
 cp "$1" "$target_dir/$target_file"
 mv "$1" "$1.trash"
