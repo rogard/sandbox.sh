@@ -2,16 +2,16 @@
 
 help()
 {
-    echo "Puts in target directory, "
-    echo "inventory of empty files and within, "
-    echo "matching directories;"
-    echo "matches are saved using markdown links [directory](path to directory);"
-    echo "writes to stdout prexisting empty files in target directory (residue)."
-    echo 
-    echo "Syntax: inventorempty.sh [-h|--help] source_directory target_directory"
-    echo "options:"
-    echo "h     Print this Help."
-    echo
+    printf "%s %s\n%s\n%s\n%s\n\n" "Puts in target directory, "\
+    "inventory of empty files and within, "\
+    "matching directories;"\
+    "matches are saved using markdown links [basename of directory](path to directory);"\
+    "writes to stdout prexisting empty files in target directory (residue)."
+    printf "%s\n%s\n%s\n"
+    "Syntax: inventorempty.sh [-h|--help] source_directory target_directory"
+    "options:"
+    "h     Print this Help."
+    
 }
 
 # https://stackoverflow.com/a/14203146/9243116
@@ -44,27 +44,21 @@ find "$target_dir" -maxdepth 1 -type f\
 
 find "$source_dir" -type f -empty\
     | while IFS= read -r path
-    do empty="${path##*/}";
-       dir=$(dirname "$path");
-       base="${dir##*/}"
-       target="$target_dir/$empty.md"
-       printf "%s\n" "[$base]($source_dir/$base)" >> "$target"
+do
+    dir=$(dirname "$path")
+    base=$(basename "$path")
+    target="$target_dir/$base.md"
+    printf "%s\n" "[${dir##*/}]($dir)" >> "$target"
 done
 
-find "$target_dir" -maxdepth 1 -type f\
- | while IFS= read -r path;\
-    do 
->"$path"
-    done
-
-residue=$(find "$target_dir" -type f -empty -print0)
+# residue=$(find "$target_dir" -type f -empty -print0) # BUG
+ residue=$(find "$target_dir" -type f -empty -print)
 
 if
     [[ -z "$residue" ]]
 then
-    echo ""
+:
 else
-    echo "Residue:"
-    echo "----"
-    echo "$residue" | xargs -0 -n1 -- basename
+#    echo "$residue" | xargs -0 -n1 -- basename
+    echo "$residue" | while IFS= read - path; do printf "%s" "$path\n"; done
 fi
