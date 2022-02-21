@@ -2,8 +2,11 @@
 source "$(dirname "${BASH_SOURCE[0]}")/../error_exit"
 source "$(dirname "${BASH_SOURCE[0]}")/../rm_blank"
 
+var=$(rm_blank "$1")
+# Fails due to nested ','
+#var=$(rm_blank $1 | tr '\n' ' ')
 arr=()
-readarray -t -O 1 arr < <(rm_blank "$1")
+readarray -t -O 1 arr < <(echo "$var")
 len="${#arr[@]}"
 (( $len == 0 )) && error_exit $(printf "length zero")
 line="${arr[1]}"
@@ -18,13 +21,21 @@ echo "$format" | grep -qE "$patt"; tail_comma="$?"
 arr[1]="$id"
 # tail
 line="${arr[$len]}"
-patt=' *}$'
+patt='^(.*)} *$'
 echo "$line" | grep -qE "$patt"; exit_code="$?"
 (( exit_code == 0 ))\
     ||  error_exit $(printf "%s tail not match %s" "$line" "$patt")
-(( len -- ))
+IFS= read tail < <(echo "$line" | sed -E "s/$patt/\1/")
+#echo "$len"
+tail=$(rm_blank <(echo "$tail"))
+if
+    [[ -z "$tail" ]]
+then
+    (( len-- ))
+else
+    arr["$len"]="$tail"
+fi
 
-# rest
 patt=' *?(.+[^= ]) *= *(\{.+\}) *'
 if (( $tail_comma == 0 ))
 then
@@ -40,6 +51,5 @@ do
         ||  error_exit $(printf "%s field does match %s" "$line" "$patt")
     arr["$i"]=$(echo "$line" | sed -E "s/$patt/\1=\2/g")
 done
-
-printf '%s\t' "$format"
-printf '%s\t' "${arr[@]:1:$len}"
+#printf '%s\t' "${arr[@]:0:$len}"
+printf '%s\t' "${arr[@]}"
