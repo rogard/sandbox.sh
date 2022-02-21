@@ -1,0 +1,7 @@
+# https://unix.stackexchange.com/a/687847/142980
+
+cat << EOF | tee >(tail -n 1 > var1) >(head -n -1) >/dev/null
+{@foo
+    ,bar = 
+    ,qux = }
+EOF

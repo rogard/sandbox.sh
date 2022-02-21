@@ -1,0 +1,4 @@
+rm_blank()
+{
+  grep '[^[:blank:]]' < "$1"
+}
