@@ -1,5 +1,6 @@
 #! /bin/bash
 source "$(dirname "${BASH_SOURCE[0]}")/../error_exit"
+source "$(dirname "${BASH_SOURCE[0]}")/../check_string"
 source "$(dirname "${BASH_SOURCE[0]}")/../rm_blank"
 
 help()
@@ -38,47 +39,36 @@ source_dir="$1"
 target_dir="$2"
 
 arr=()
-# nested, forbids:
-# readarray -t -O 1 arr < <(rm_blank "$1" | tr '\n' ' ')
-readarray -t -O 1 arr < <(rm_blank "$1")
+readarray -t arr < <(rm_blank "$1")
 len="${#arr[@]}"
-(( $len == 0 )) && error_exit $(printf "length zero")
-line="${arr[1]}"
-patt='^@(.+)\{ *(.+)'
-echo "$line" | grep -qE "$patt"; exit_code="$?"
-(( exit_code == 0 ))\
-    ||  error_exit $(printf "%s head not match %s" "$line" "$patt")
+# *** head
+patt='^@(.+)\{(.+)[,]?$'
+line="${arr[0]}"
+exit_code=$(check_string "$patt" "$line")
+(( exit_code == 0 )) || printf "head=%s does not match %s " "$line" "$patt"
 IFS=$'\t' read entry_type id < <(echo "$line" | sed -E "s/$patt/\1\t\2/")
-patt=','
-echo "$entry_type" | grep -qE "$patt"; tail_comma="$?"
-#arr[0]="$entry_type"
-arr[1]="$id"
-# tail
-line="${arr[$len]}"
-patt=' *}$'
-echo "$line" | grep -qE "$patt"; exit_code="$?"
-(( exit_code == 0 ))\
-    ||  error_exit $(printf "%s tail not match %s" "$line" "$patt")
-(( len -- ))
+arr[0]="$id"
+# *** tail
+patt='^}$'
+(( line_num = $len-1 ))
+line="${arr[$line_num]}"
+exit_code=$(check_string "$patt" "$line")
+(( exit_code == 0 )) || printf "tail=%s does not match %s " "$line" "$patt"
 
-# rest
-patt=' *?(.+[^= ]) *= *(\{.+\}) *'
-if (( $tail_comma == 0 ))
-then
-patt='^'"$patt"', *$'
-else
-patt='^ *,'"$patt"'$'
-fi   
-for (( i = 2; i <= $len; i++ ))
-do
-    line="${arr[$i]}"
-    echo "$line" | grep -qE "$patt"; exit_code="$?"
-    (( exit_code == 0 ))\
-        ||  error_exit $(printf "%s field does match %s" "$line" "$patt")
-    arr["$i"]=$(echo "$line" | sed -E "s/$patt/\1=\2/g")
-done
+# *** rest
+#patt='^ *[,]?(.+[^= ]) *= *(\{.+\}) *$'
 
-printf '%s\t' "$entry_type"
-(( len_bis = len-1 ))
-printf '%s\t' "${arr[@]:1:$len_bis}"
-printf '%s' "${arr[$len]}"
+#for (( i = 2; i <= $len; i++ ))
+#do
+#    line="${arr[$i]}"
+#    echo "$line"
+#    #    echo "$line" | grep -qE "$patt"; exit_code="$?"
+#    #    (( exit_code == 0 ))\
+#        #        ||  error_exit $(printf "%s field does match %s" "$line" "$patt")
+#    #    arr["$i"]=$(echo "$line" | sed -E "s/$patt/\1=\2/g")
+#done
+#
+#printf '%s\t' "$entry_type"
+#(( len_bis = len-1 ))
+#printf '%s\t' "${arr[@]:1:$len_bis}"
+#printf '%s' "${arr[$len]}"
