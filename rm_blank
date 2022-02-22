@@ -1,4 +1,6 @@
 rm_blank()
 {
+# Related:
+#  awk '!/^[[:blank:]]*$/'
   grep '[^[:blank:]]' < "$1"
 }

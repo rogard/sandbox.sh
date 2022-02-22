@@ -79,4 +79,6 @@ do
 done
 
 printf '%s\t' "$entry_type"
-printf '%s\t' "${arr[@]:1:$len}"
+(( len_bis = len-1 ))
+printf '%s\t' "${arr[@]:1:$len_bis}"
+printf '%s' "${arr[$len]}"

@@ -1,7 +1,11 @@
 # https://unix.stackexchange.com/a/687847/142980
 
-cat << EOF | tee >(tail -n 1 > var1) >(head -n -1) >/dev/null
+$ cat << EOF | tee >(tail -n 1 > var1) >(head -n -1) >/dev/null
 {@foo
     ,bar = 
     ,qux = }
 EOF
+
+$ find entry -name '*bib' | while IFS= read path; do count=$(wc -l "$path" | awk '{print $1;}'); var=$(awk 'END{print;}' "$path"); echo "$var" | grep -Eq '^[[:blank:]]+$'; exit_code="$?"; if (( "$exit_code" == 0 )); then echo "$path"; fi ; done
+
+$ find entry -name '*bib' | while IFS= read -r path; do non_blank=$(awk '!/^[[:blank:]]*$/' "$path"); echo "$non_blank" | tac | sed '1s/}}/}/' | tac > "$path"; done
