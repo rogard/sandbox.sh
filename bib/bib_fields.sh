@@ -42,32 +42,68 @@ arr=()
 readarray -t arr < <(rm_blank "$1")
 len="${#arr[@]}"
 # *** head
-patt='^@(.+)\{(.+)[,]?$'
+patt='^@(.+)\{(.+)$'
 line="${arr[0]}"
 exit_code=$(check_string "$patt" "$line")
-(( exit_code == 0 )) || printf "head=%s does not match %s " "$line" "$patt"
+if
+    (( exit_code != 0 ))
+then
+    printf "head=%s does not match %s " "$line" "$patt"
+    exit 1
+fi
+
 IFS=$'\t' read entry_type id < <(echo "$line" | sed -E "s/$patt/\1\t\2/")
-arr[0]="$id"
+patt='^(\w+),$'
+tail_comma=$(check_string "$patt" "$id")
+if
+    (( tail_comma == 0 ))
+then
+    arr[0]=$(echo "$id" | sed 's/$patt/\1/')
+fi
+
 # *** tail
 patt='^}$'
 (( line_num = $len-1 ))
 line="${arr[$line_num]}"
 exit_code=$(check_string "$patt" "$line")
-(( exit_code == 0 )) || printf "tail=%s does not match %s " "$line" "$patt"
+if
+    (( exit_code != 0 ))
+then 
+    printf "tail=%s does not match %s " "$line" "$patt"
+    exit 1
+fi
 
 # *** rest
-#patt='^ *[,]?(.+[^= ]) *= *(\{.+\}) *$'
+patt_base='(.+[^= ]) *= *(\{.+\})'
+if(( tail_comma==0 ))
+then
+    patt='^ *'"$patt_base"',$'
+    (( len_bis = len - 2 ))
+else
+    patt='^ *,'"$patt_base"'$'
+    (( len_bis = len - 1 ))
+fi
 
-#for (( i = 2; i <= $len; i++ ))
-#do
-#    line="${arr[$i]}"
-#    echo "$line"
-#    #    echo "$line" | grep -qE "$patt"; exit_code="$?"
-#    #    (( exit_code == 0 ))\
-#        #        ||  error_exit $(printf "%s field does match %s" "$line" "$patt")
-#    #    arr["$i"]=$(echo "$line" | sed -E "s/$patt/\1=\2/g")
-#done
-#
+for (( i = 1; i < $len_bis; i++ ))
+do
+    line="${arr[$i]}"
+    exit_code=$(check_string "$patt" "$line")
+    if
+        (( exit_code != 0 ))
+    then 
+        printf "field=%s does not match %s " "$line" "$patt"
+        exit 1
+    fi
+     arr["$i"]=$(echo "$line" | sed -E "s/$patt/\1=\2/g")
+done
+
+if (( tail_comma ))
+then
+    
+else
+fi
+
+
 #printf '%s\t' "$entry_type"
 #(( len_bis = len-1 ))
 #printf '%s\t' "${arr[@]:1:$len_bis}"
