@@ -56,9 +56,11 @@ IFS=$'\t' read entry_type id < <(echo "$line" | sed -E "s/$patt/\1\t\2/")
 patt='^(\w+),$'
 tail_comma=$(check_string "$patt" "$id")
 if
-    (( tail_comma == 0 ))
+    (( tail_comma==0 ))
 then
     arr[0]=$(echo "$id" | sed 's/$patt/\1/')
+else
+    arr[0]="$id"    
 fi
 
 # *** tail
@@ -74,18 +76,25 @@ then
 fi
 
 # *** rest
-patt_base='(.+[^= ]) *= *(\{.+\})'
+patt_key='([^= ]+)'
+patt_value='\{([^}]+)\}'
+patt_equal=' *= *'
+patt_middle="$patt_key""$patt_equal""$patt_value"
+patt_head='^ *'
+patt_tail=' *$'
 if(( tail_comma==0 ))
 then
+#    echo "tail_comma"
     patt='^ *'"$patt_base"',$'
+    patt="$patt_head""$patt_middle"','"$patt_tail"
     (( len_bis = len - 2 ))
 else
-    patt='^ *,'"$patt_base"'$'
+#    echo "front_comma"
+    patt="$patt_head"','"$patt_middle""$patt_tail"
     (( len_bis = len - 1 ))
 fi
-
-for (( i = 1; i < $len_bis; i++ ))
-do
+this_do()
+{
     line="${arr[$i]}"
     exit_code=$(check_string "$patt" "$line")
     if
@@ -94,17 +103,22 @@ do
         printf "field=%s does not match %s " "$line" "$patt"
         exit 1
     fi
-     arr["$i"]=$(echo "$line" | sed -E "s/$patt/\1=\2/g")
+    arr["$i"]=$(echo "$line" | sed -E "s/$patt/\1={\2}/g")
+}
+for (( i = 1; i < $len_bis; i++ ))
+do
+    this_do
 done
 
-if (( tail_comma ))
+if (( tail_comma==0 ))
 then
-    
-else
+    (( i=len-1 ))
+    patt='^ *'"$patt_base"'$'
+    this_do
 fi
 
+printf '%s\t' "$entry_type"
+(( len_bis = len-2 )) #pkoi?
+printf '%s\t' "${arr[@]:0:$len_bis}"
 
-#printf '%s\t' "$entry_type"
-#(( len_bis = len-1 ))
-#printf '%s\t' "${arr[@]:1:$len_bis}"
-#printf '%s' "${arr[$len]}"
+
