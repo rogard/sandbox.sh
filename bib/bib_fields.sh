@@ -5,15 +5,33 @@ source "$(dirname "${BASH_SOURCE[0]}")/../rm_blank"
 
 help()
 {
-    printf "s%\n%s\n%s\n%s\n"\
-    "Takes as input a file containing one bib entry, and outputs tab separated:"\
-    "- entry type"\
-    "- identifier"\
-    "- remaining fields"
-    printf "s%\n%s\n%s\n"\
-    "Syntax: bib_fields_base.sh [-h|--help] file"\
-    "options:"\
-    "h     Print this Help."
+    printf "%s\n"\
+           "Takes as input a file containing one bib entry, and outputs tab separated:"\
+           "- entry type"\
+           "- identifier"\
+           "- remaining fields."\
+           ""
+    printf "%s\n"\
+           "Syntax: bib_fields.sh [-h|--help] file"\
+           "options:"\
+           "- h     Print this Help."\
+           ""\
+           "Requirement on file:"
+    printf "%s\n"\
+           "@[entry type]{[identifier],"\
+           "    key = {value},"\
+           "        .      "\
+           "        .      "\
+           "        .      "\
+           "    key = {value},"\
+           "    key = {value}"\
+           "}"\
+           ""\
+           "Variants:"
+    printf "%s\n"\
+           "- lead spacing and surrounding '='"\
+           "- blank lines before/after"\
+           "- no trailing comma for [identifier] and leading ',' for all fields."
 }
 
 # https://stackoverflow.com/a/14203146/9243116
