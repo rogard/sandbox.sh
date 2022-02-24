@@ -17,6 +17,7 @@ help()
            "Syntax: bib_parse.sh [-h|--help] file"\
            "options:"\
            "- h     Print this Help."\
+           "- b     Format as bib entry."\
            ""\
            "Requirement on file:"
     printf "%s\n"\
@@ -42,11 +43,16 @@ help()
 
 # https://stackoverflow.com/a/14203146/9243116
 POSITIONAL_ARGS=()
+bibify=1
 while [[ $# -gt 0 ]]; do
   case $1 in
       -h|--help)
           help
           exit 0
+      ;;
+      -b|--bib)
+          bibify=0
+          shift # past argument
       ;;
     -*|--*)
       echo "Unknown option $1"
@@ -90,8 +96,8 @@ fi
 
 # *** closing '}'
 patt='^}$'
-(( line_num = $len-1 ))
-tail="${arr[$line_num]}"
+(( closing_line_num = $len-1 ))
+tail="${arr[$closing_line_num]}"
 [[ $tail =~ $patt ]]\
     || error_exit $(printf "tail='%s' does not match '%s'" "$tail" "$patt")
 
@@ -132,5 +138,14 @@ then
     fi    
 fi
 
-printf '%s\t' "$entry_type"
-printf '%s\t' "${arr[@]:0:$i_bound}"
+if (( bibify==0 ))
+then
+    readarray -t arr < <("${BASH_SOURCE[0]}" $1)
+    printf "@$entry_type{%s,\n" "${arr[1]}"
+    printf "    %s,\n" "${arr[@]:2:(( $i_bound - 2 ))}"
+    printf "    %s\n" "${arr[(( $i_bound ))]}"
+    printf "}\n"
+else
+    printf '%s\n' "$entry_type"
+    printf '%s\n' "${arr[@]:0:$i_bound}"
+fi
