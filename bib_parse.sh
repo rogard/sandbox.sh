@@ -95,6 +95,8 @@ tail="${arr[$line_num]}"
     || error_exit $(printf "tail='%s' does not match '%s'" "$tail" "$patt")
 
 # *** tail-comma
+patt_middle='([^ ]+) *= *\{(.+)\}'
+patt_versat="^ *[,]?$patt_middle[,]?$"
 (( i_bound=len-1 ))
 if (( tail_comma==0 ))
 then
@@ -108,7 +110,7 @@ do
     line="${arr[$i]}"
     if [[ $line =~ $patt ]]
     then
-        :
+        arr["$i"]=$(echo "$line" | sed -E "s/$patt_versat/\1={\2}/")
     else
         printf "Checking comma:\n line=%s does not match %s " "$line" "$patt"
         exit 1
@@ -121,30 +123,29 @@ then
     line="${arr[$i_bound]}"
     if [[ $line =~ $patt ]]
     then
-        :
+        arr["$i_bound"]=$(echo "$line" | sed -E "s/$patt_versat/\1={\2}/")
+        echo "${arr[$i_bound]}"
     else
-        printf "Checking comma:\n xline=%s does not match %s " "$line" "$patt"
+        printf "Checking comma:\n line=%s does not match %s " "$line" "$patt"
         exit 1
     fi    
 fi
 
-#patt_key='([^= ]+)'
-#patt_value='\{([^}]+)\}'
-#patt_equal=' *= *'
-#patt_middle="$patt_key""$patt_equal""$patt_value"
-#patt_head='^ *'
-#patt_tail=' *$'
-#if(( tail_comma==0 ))
-#then
-##    echo "tail_comma"
-#    patt='^ *'"$patt_base"',$'
-#    patt="$patt_head""$patt_middle"','"$patt_tail"
-#    (( len_bis = len - 2 ))
-#else
-##    echo "front_comma"
-#    patt="$patt_head"','"$patt_middle""$patt_tail"
-#    (( len_bis = len - 1 ))
-#fi
+patt_key='([^= ]+)'
+patt_value='\{([^}]+)\}'
+patt_equal=' *= *'
+patt_middle="$patt_key""$patt_equal""$patt_value"
+patt_head='^ *'
+patt_tail=' *$'
+if(( tail_comma==0 ))
+then
+    patt='^ *'"$patt_base"',$'
+    patt="$patt_head""$patt_middle"','"$patt_tail"
+    (( len_bis = len - 2 ))
+else
+    patt="$patt_head"','"$patt_middle""$patt_tail"
+    (( len_bis = len - 1 ))
+fi
 #this_do()
 #{
 #    line="${arr[$i]}"
