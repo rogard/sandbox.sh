@@ -1,14 +1,15 @@
 #! /bin/bash
-source "$(dirname "${BASH_SOURCE[0]}")/error_exit"
-source "$(dirname "${BASH_SOURCE[0]}")/check_string"
-source "$(dirname "${BASH_SOURCE[0]}")/rm_blank"
-source "$(dirname "${BASH_SOURCE[0]}")/rm_empty_lines"
-source "$(dirname "${BASH_SOURCE[0]}")/rm_latex_comment"
+dirname_bash_source=$(dirname "${BASH_SOURCE[0]}")
+source "$dirname_bash_source/error_exit"
+source "$dirname_bash_source/check_string"
+source "$dirname_bash_source/rm_blank"
+source "$dirname_bash_source/rm_empty_lines"
+source "$dirname_bash_source/rm_latex_comment"
 
 help()
 {
     printf "%s\n"\
-           "Takes as input a file containing one bib entry, and outputs tab separated:"\
+           "Takes as input a file containing one bib entry, and by default outputs line by line:"\
            "- entry type"\
            "- identifier"\
            "- remaining fields."\
@@ -22,23 +23,30 @@ help()
            "Requirement on file:"
     printf "%s\n"\
            "@[entry type]{[identifier],"\
-           "    key = {value},"\
-           "        .      "\
-           "        .      "\
-           "        .      "\
-           "    key = {value},"\
-           "    key = {value}"\
+           "    key={value},"\
+           "       .     "\
+           "       .     "\
+           "       .     "\
+           "    key={value},"\
+           "    key={value}"\
            "}"\
            ""\
            "Variants:"
     printf "%s\n"\
+           "- upper case key"\
            "- lead spacing and surrounding '='"\
            "- blank lines before/after"\
+           "- trailing %.+"\
+           "- lines begining with %"\
            "- no trailing comma for [identifier] and leading ',' for all fields."\
            ""\
            "Example:" 
     printf "%s\n"\
-           "bib_parse.sh aux/knuth1984.bib'"    
+           "bib_parse.sh aux/knuth1984.bib'"\
+    ""
+    printf "%s\n"\
+           "Warning: option -b will not restore latex comments (%)"\
+           ""
 }
 
 # https://stackoverflow.com/a/14203146/9243116
@@ -103,7 +111,7 @@ tail="${arr[$closing_line_num]}"
 
 # *** tail-comma
 patt_middle='([^ ]+) *= *\{(.+)\}'
-patt_versat="^ *[,]?$patt_middle[,]?$"
+patt_versat="^ *[,]?$patt_middle[,]?(\s*%.*)?$"
 (( i_bound=len-1 ))
 if (( tail_comma==0 ))
 then
@@ -112,12 +120,23 @@ then
 else
     patt='^ *,[^,]+=.+$'
 fi
+lhs()
+{
+    echo "$1" | sed -E "s/$2/\1/" | tr '[:upper:]' '[:lower:]'
+}
+rhs()
+{
+    echo "$1" | sed -E "s/$2/{\2}/"
+}
+
 for (( i = 1; i < $i_bound; i++ ))
 do    
     line="${arr[$i]}"
     if [[ $line =~ $patt ]]
     then
-        arr["$i"]=$(echo "$line" | sed -E "s/$patt_versat/\1={\2}/")
+        lhs=$(lhs "$line" "$patt_versat")
+        rhs=$(rhs "$line" "$patt_versat")
+        arr["$i"]=$(echo "$lhs=$rhs")
     else
         printf "Checking comma:\n line=%s does not match %s " "$line" "$patt"
         exit 1
@@ -130,7 +149,9 @@ then
     line="${arr[$i_bound]}"
     if [[ $line =~ $patt ]]
     then
-        arr["$i_bound"]=$(echo "$line" | sed -E "s/$patt_versat/\1={\2}/")
+        lhs=$(lhs "$line" "$patt_versat")
+        rhs=$(rhs "$line" "$patt_versat")
+        arr["$i_bound"]=$(echo "$lhs=$rhs")
         (( i_bound++ )) #pkoi?
     else
         printf "Checking comma:\n line=%s does not match %s " "$line" "$patt"
