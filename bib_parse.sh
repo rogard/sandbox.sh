@@ -43,7 +43,8 @@ help()
            "Example:" 
     printf "%s\n"\
            "bib_parse.sh aux/knuth1984.bib'"\
-    ""
+           "$ find path -type f -name '*bib' | while IFS= read -r entry; do ./bib_parse.sh "$entry" 1>/dev/null; (( "$?" == 0 )) || echo "$entry"; done"\
+           ""
     printf "%s\n"\
            "Warning: option -b will not restore latex comments (%)"\
            ""
@@ -110,15 +111,15 @@ tail="${arr[$closing_line_num]}"
     || error_exit $(printf "tail='%s' does not match '%s'" "$tail" "$patt")
 
 # *** tail-comma
-patt_middle='([^ ]+) *= *\{(.+)\}'
-patt_versat="^ *[,]?$patt_middle[,]?(\s*%.*)?$"
+patt_middle='([^ ]+)\s*=\s*\{(.+)\}'
+patt_versat="^\s*[,]?$patt_middle[,]?(\s*%.*)?$"
 (( i_bound=len-1 ))
 if (( tail_comma==0 ))
 then
     patt='^[^,]+=.+,$'
     (( i_bound-- ))
 else
-    patt='^ *,[^,]+=.+$'
+    patt='^\s*,[^,]+=.+$'
 fi
 lhs()
 {
@@ -138,7 +139,7 @@ do
         rhs=$(rhs "$line" "$patt_versat")
         arr["$i"]=$(echo "$lhs=$rhs")
     else
-        printf "Checking comma:\n line=%s does not match %s " "$line" "$patt"
+        printf "Checking comma:\n line='%s' does not match '%s' " "$line" "$patt"
         exit 1
     fi
 done
