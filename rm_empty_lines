@@ -1,0 +1,6 @@
+rm_empty_lines()
+{
+#  grep -vE '^$' < "${1:-$(</dev/stdin)}"
+   input="${1:-$(</dev/stdin)}"
+   echo "$input" | grep -vE '^$'
+}

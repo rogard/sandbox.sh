@@ -1,0 +1,7 @@
+rm_latex_comment()
+{
+  #old:
+  #grep -Ev '^%.+$' < "$1"
+  input="${1:-$(</dev/stdin)}"
+  echo "$input" | grep -Ev '^%.+$'
+}
