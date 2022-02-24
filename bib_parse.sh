@@ -59,12 +59,13 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 set -- "${POSITIONAL_ARGS[@]}"
-source_dir="$1"
-target_dir="$2"
+#source_dir="$1"
+#target_dir="$2"
 
 arr=()
-readarray -t arr < <(rm_empty_lines "$1" | rm_latex_comment)
+readarray -t arr < <(rm_empty_lines < "$1" | rm_latex_comment)
 len="${#arr[@]}"
+
 # *** head
 head="${arr[0]}"
 patt_base='@(.+)\{(.+)'
@@ -72,11 +73,11 @@ patt='^'"$patt_base"'$'
 if
     [[ $head =~ $patt ]]
 then
-    tail_comma=false
+    tail_comma=1 # (false)
     if
         [[ $head =~ ^.+,$ ]]
     then
-        tail_comma=true
+        tail_comma=0
         patt='^'"$patt_base"',$'
     fi   
     IFS=$'\t' read entry_type id <\
@@ -86,14 +87,47 @@ else
     error_exit $(printf "head='%s' does not match '%s'" "$head" "$patt")
 fi
 
-# *** tail
+# *** closing '}'
 patt='^}$'
 (( line_num = $len-1 ))
 tail="${arr[$line_num]}"
 [[ $tail =~ $patt ]]\
     || error_exit $(printf "tail='%s' does not match '%s'" "$tail" "$patt")
 
-## *** rest
+# *** tail-comma
+(( i_bound=len-1 ))
+if (( tail_comma==0 ))
+then
+    patt='^[^,]+=.+,$'
+    (( i_bound-- ))
+else
+    patt='^ *,[^,]+=.+$'
+fi
+for (( i = 2; i < $i_bound; i++ ))
+do
+    line="${arr[$i]}"
+    if [[ $line =~ $patt ]]
+    then
+        :
+    else
+        printf "Checking comma:\n line=%s does not match %s " "$line" "$patt"
+        exit 1
+    fi
+done
+if
+    (( tail_comma==0 ))
+then        
+    patt='^[^,]+=.+[^,]$'
+    line="${arr[$i_bound]}"
+    if [[ $line =~ $patt ]]
+    then
+        :
+    else
+        printf "Checking comma:\n xline=%s does not match %s " "$line" "$patt"
+        exit 1
+    fi    
+fi
+
 #patt_key='([^= ]+)'
 #patt_value='\{([^}]+)\}'
 #patt_equal=' *= *'
@@ -114,16 +148,20 @@ tail="${arr[$line_num]}"
 #this_do()
 #{
 #    line="${arr[$i]}"
-#    exit_code=$(check_string "$patt" "$line")
-#    if
-#        (( exit_code != 0 ))
-#    then 
+#    if (( tail_comma==0 )) && (( $i < $len-1 ))
+#    then
+#        if [[ $line =~ "^.+,^" ]]
+#        arr["$i"]=$(echo "$line" | sed -E "s/ /\1={\2}/g")
+#
+#          
+#    then
+#        arr["$i"]=$(echo "$line" | sed -E "s/$patt/\1={\2}/g")
+#    else
 #        printf "field=%s does not match %s " "$line" "$patt"
 #        exit 1
 #    fi
-#    arr["$i"]=$(echo "$line" | sed -E "s/$patt/\1={\2}/g")
 #}
-#for (( i = 1; i < $len_bis; i++ ))
+##for (( i = 1; i < $len_bis; i++ ))
 #do
 #    this_do
 #done
