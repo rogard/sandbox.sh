@@ -106,8 +106,8 @@ then
 else
     patt='^ *,[^,]+=.+$'
 fi
-for (( i = 2; i < $i_bound; i++ ))
-do
+for (( i = 1; i < $i_bound; i++ ))
+do    
     line="${arr[$i]}"
     if [[ $line =~ $patt ]]
     then
