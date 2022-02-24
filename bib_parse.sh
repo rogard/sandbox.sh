@@ -83,6 +83,7 @@ then
     IFS=$'\t' read entry_type id <\
        <(echo "$head"\
              | sed -E "s/$patt/\1\t\2/")
+    arr[0]="$id"
 else
     error_exit $(printf "head='%s' does not match '%s'" "$head" "$patt")
 fi
@@ -118,62 +119,18 @@ do
 done
 if
     (( tail_comma==0 ))
-then        
-    patt='^[^,]+=.+[^,]$'
+then
+    patt='^ *[^,]+=.+\}$'
     line="${arr[$i_bound]}"
     if [[ $line =~ $patt ]]
     then
         arr["$i_bound"]=$(echo "$line" | sed -E "s/$patt_versat/\1={\2}/")
-        echo "${arr[$i_bound]}"
+        (( i_bound++ )) #pkoi?
     else
         printf "Checking comma:\n line=%s does not match %s " "$line" "$patt"
         exit 1
     fi    
 fi
 
-patt_key='([^= ]+)'
-patt_value='\{([^}]+)\}'
-patt_equal=' *= *'
-patt_middle="$patt_key""$patt_equal""$patt_value"
-patt_head='^ *'
-patt_tail=' *$'
-if(( tail_comma==0 ))
-then
-    patt='^ *'"$patt_base"',$'
-    patt="$patt_head""$patt_middle"','"$patt_tail"
-    (( len_bis = len - 2 ))
-else
-    patt="$patt_head"','"$patt_middle""$patt_tail"
-    (( len_bis = len - 1 ))
-fi
-#this_do()
-#{
-#    line="${arr[$i]}"
-#    if (( tail_comma==0 )) && (( $i < $len-1 ))
-#    then
-#        if [[ $line =~ "^.+,^" ]]
-#        arr["$i"]=$(echo "$line" | sed -E "s/ /\1={\2}/g")
-#
-#          
-#    then
-#        arr["$i"]=$(echo "$line" | sed -E "s/$patt/\1={\2}/g")
-#    else
-#        printf "field=%s does not match %s " "$line" "$patt"
-#        exit 1
-#    fi
-#}
-##for (( i = 1; i < $len_bis; i++ ))
-#do
-#    this_do
-#done
-#
-#if (( tail_comma==0 ))
-#then
-#    (( i=len-1 ))
-#    patt='^ *'"$patt_base"'$'
-#    this_do
-#fi
-#
-#printf '%s\t' "$entry_type"
-#(( len_bis = len-2 )) #pkoi?
-#printf '%s\t' "${arr[@]:0:$len_bis}"
+printf '%s\t' "$entry_type"
+printf '%s\t' "${arr[@]:0:$i_bound}"
