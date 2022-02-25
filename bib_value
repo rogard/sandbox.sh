@@ -1,3 +1,5 @@
+# bib_value 'year' < <(./bib_parse.sh knuth1984.bib)
+
 bib_value()
 {
     key="$1"
@@ -6,7 +8,7 @@ bib_value()
         | { line=$(grep -E "$key=\{.+\}");\
         if (( "$?" == 0 ));\
         then echo "$line" | sed -E "s/$key=\{(.+)\}/\1/";\
-        else error_exit "missing key=$key";\
+        else error_exit "missing key: $key";\
         fi }
 }
 

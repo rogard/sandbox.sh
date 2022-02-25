@@ -53,7 +53,7 @@ help()
 # https://stackoverflow.com/a/14203146/9243116
 POSITIONAL_ARGS=()
 bibify=1
-while [[ $# -gt 0 ]]; do
+while (( $# > 0 )); do
   case $1 in
       -h|--help)
           help
