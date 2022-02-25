@@ -1,0 +1,31 @@
+bib_value()
+{
+    key="$1"
+    readarray -t arr "$2"
+    printf "%s\n" "${arr[@]}"\
+        | { line=$(grep -E "$key=\{.+\}");\
+        if (( "$?" == 0 ));\
+        then echo "$line" | sed -E "s/$key=\{(.+)\}/\1/";\
+        else error_exit "missing key=$key";\
+        fi }
+}
+
+bib_year()
+{
+    echo $(bib_value 'year' "$1")
+}
+
+bib_month()
+{
+    echo $(bib_value 'month' "$1")
+}
+
+bib_day()
+{
+    echo $(bib_value 'day' "$1")
+}
+
+bib_year_month()
+{
+    printf "%s-%s" $(bib_year "$1") $(bib_month "$1")
+}
