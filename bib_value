@@ -29,3 +29,8 @@ bib_year_month()
 {
     printf "%s-%s" $(bib_year "$1") $(bib_month "$1")
 }
+
+bib_year_month_day()
+{
+    printf "%s-%s-%s" $(bib_year "$1") $(bib_month "$1") $(bib_day "$1")
+}
