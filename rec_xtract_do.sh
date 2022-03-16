@@ -1,18 +1,17 @@
 #! /usr/bin/env bash
-bash_source="${BASH_SOURCE[0]}"
-dir_bash_source=$(dirname "$bash_source")
+this="${BASH_SOURCE[0]}"
+this_dir=$(dirname "$this")
 source error_exit
 
 help()
 {
-    echo "Syntax: ./rec_extract_do.sh script name.tar.gz "
-    printf "%s " "Semantics: for each file extracted from name.tar.gz,"\
+    echo "Syntax: ./rec_extract_do.sh [arg1...] -- path1 ..."
+    printf "%s " "Semantics: if path,"\
            "if it is itself *tar.gz, then recurses,"\
-           "otherwise executes 'script file'"    
+           "otherwise executes 'script [arg1...] file'"
 }
 
-# https://stackoverflow.com/a/14203146/9243116
-POSITIONAL_ARGS=()
+ante_args=()
 while (( $# > 0 ));
 do
     case $1 in
@@ -20,44 +19,49 @@ do
             help
             exit 0
             ;;
-        -*|--*)
-            echo "Unknown option $1"
-            exit 1
+        --)
+            shift
+            break
             ;;
         *)
-            POSITIONAL_ARGS+=("$1") # save positional arg
+#            echo "\$1=$1"
+            ante_args+=("$1") # save positional arg
             shift # past argument
             ;;
     esac
 done
-set -- "${POSITIONAL_ARGS[@]}"
 
-(( $# > 1 )) || error_exit "Expecting > 1 arguments, got $@"
+if
+    (( $# == 0 ))
+then
+    exit 0
+fi
 
-script="$1"
+# echo "${ante_args[@]}"
+
+path="$1"
 shift
 
-compressed_file="$1"
-shift
+if
+    [[ $path =~ .tar.gz$ ]]
+then
 
-# <div>
-# https://stackoverflow.com/a/53063602/9243116
-dir_tmp=$(mktemp -d)
+    # <div>
+    # https://stackoverflow.com/a/53063602/9243116
+    dir_tmp=$(mktemp -d)
 
-[[ -d "$dir_tmp" ]] || error_exit "temp dir fail"
+    [[ -d "$dir_tmp" ]] || error_exit "$this" "$dir_tmp"
 
-trap "exit 1"           HUP INT PIPE QUIT TERM
-trap 'rm -rf "$dir_tmp"' EXIT
-# </div>
+    trap "exit 1"           HUP INT PIPE QUIT TERM
+    trap 'rm -rf "$dir_tmp"' EXIT
+    # </div>
 
-#echo "$compressed_file"
+    tar -xvzf "$path" --directory="$dir_tmp" 1>/dev/null
 
-tar -xvzf "$compressed_file" --directory="$dir_tmp" 1>/dev/null
+    find "$dir_tmp" -type f -print0 | xargs -0 "$this" "$ante_args" --
 
-find "$dir_tmp" -type f -print0 | grep -zEv '\.tar\.gz$' | xargs -0 -I {} "$script" {}
+else
+    "$ante_args" -- "$path"
+fi
 
-find "$dir_tmp" -type f -print0\
-    | grep -zE '\.tar\.gz$'\
-    | xargs -0 -I {} "$bash_source" "$script" {}
-
-(( $# == 0 )) || "$bash_source" "$script" "$@"
+(( $# == 0 )) || "$this" "$ante_args" -- "$@"
