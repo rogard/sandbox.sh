@@ -6,8 +6,7 @@ source "$this_dir"/error_exit
 help()
 {
     echo "Syntax: ./rec_extract_do.sh [arg1...] -- path1 ..."
-    printf "%s " "Semantics: if path,"\
-           "if it is itself *tar.gz, then recurses,"\
+    printf "%s " "Semantics: if path is *tar.gz, expands it and recurses,"\
            "otherwise executes 'script [arg1...] file'"
 }
 
@@ -55,10 +54,10 @@ then
 
     tar -xvzf "$path" --directory="$dir_tmp" 1>/dev/null
 
-    find "$dir_tmp" -type f -print0 | xargs -0 "$this" "$ante_args" --
+    find "$dir_tmp" -type f -print0 | xargs -0 "$this" "${ante_args[@]}" --
 
 else
-    "$ante_args" -- "$path"
+    "${ante_args[@]}" "$path"
 fi
 
-(( $# == 0 )) || "$this" "$ante_args" -- "$@"
+(( $# == 0 )) || "$this" "${ante_args[@]}" -- "$@"
