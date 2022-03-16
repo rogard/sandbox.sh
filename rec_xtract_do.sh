@@ -1,31 +1,34 @@
 #! /usr/bin/env bash
+# =========================================================================
+# recursextract.sh                             Copyright 2022 Erwann Rogard
+#                                                                  GPL v3.0
+# Syntax:    ./recursextract.sh <ante args> -- <path> ...
+# Semantics: checks if <path> =~ tar.gz; if applicable extracts it and
+#            recurses; otherwise executes <ante args> <path>; repeats with
+#            the next path.
+# Use case   find <source_dir> -type f -print0 | xargs -0\
+#            ./recursextract.sh ./indexyfile.sh <target_directory> --
+# =========================================================================
+
 this="${BASH_SOURCE[0]}"
 this_dir=$(dirname "$this")
 source "$this_dir"/error_exit
 
 help()
 {
-    echo "Syntax: ./rec_extract_do.sh [arg1...] -- path1 ..."
-    printf "%s " "Semantics: if path is *tar.gz, expands it and recurses,"\
-           "otherwise executes 'script [arg1...] file'"
+    echo "Syntax: ./recursextract.sh <ante args> -- <path> ..."
+    echo "Options:"
+    echo "  --help"   
+    echo "Also see: the source file"
 }
 
 ante_args=()
 while (( $# > 0 ))
 do
-    case $1 in
-        -h|--help)
-            help
-            exit 0
-            ;;
-        --)
-            shift
-            break
-            ;;
-        *)
-            ante_args+=("$1") # save positional arg
-            shift # past argument
-            ;;
+    case ${1} in
+        ( '--help' ) help; exit;;
+        ( '--' ) shift; break ;;
+        ( * ) ante_args+=("$1"); shift;;
     esac
 done
 
