@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 this="${BASH_SOURCE[0]}"
 this_dir=$(dirname "$this")
-source error_exit
+source "$this_dir"/error_exit
 
 help()
 {
@@ -12,7 +12,7 @@ help()
 }
 
 ante_args=()
-while (( $# > 0 ));
+while (( $# > 0 ))
 do
     case $1 in
         -h|--help)
@@ -24,7 +24,6 @@ do
             break
             ;;
         *)
-#            echo "\$1=$1"
             ante_args+=("$1") # save positional arg
             shift # past argument
             ;;
@@ -36,8 +35,6 @@ if
 then
     exit 0
 fi
-
-# echo "${ante_args[@]}"
 
 path="$1"
 shift
