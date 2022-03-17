@@ -1,17 +1,22 @@
-#!/bin/bash
-dirname_bash_source=$(dirname "${BASH_SOURCE[0]}")
-source "$dirname_bash_source"/error_exit
+#! /usr/bin/env bash
+# =========================================================================
+# cksum0x.sh                                   Copyright 2022 Erwann Rogard
+#                                                                  GPL v3.0
+# Syntax:     ./cksum0x.sh <file>
+# Output:     hexa of cksum of <file>
+# =========================================================================
+this="${BASH_SOURCE[0]}"
+this_dir=$(dirname "$this")
+source "$this_dir"/error_exit
 
 help()
 {
-    echo "Syntax: cksum0x.sh [-h|--help] file_path "
-    echo "Output: Hexa of cksum of file_path's content"
-    echo "What for? For what a unique identifier may be for"
+    echo "Syntax: cksum0x.sh <file> "
+    echo "Also see: source file"
     echo
 }
 
-# https://stackoverflow.com/a/14203146/9243116
-positional_args=()
+operands=()
 while (( $# > 0 ))
 do
     case $1 in
@@ -29,13 +34,13 @@ do
             exit 1
             ;;
         *)
-            positional_args+=("$1") # save positional arg
-            shift # past argument
+            operands+=("$1")
+            shift
             ;;
     esac
 done
 
-set -- "${positional_args[@]}"
+set -- "${operands1[@]}"
 
 (( $# == 1 )) ||\
     error_exit $(printf "Expecting 1 positional argument, instead: %s\t" "$@")
@@ -44,6 +49,7 @@ set -- "${positional_args[@]}"
     error_exit $(printf "Expecting a file for  %s" "$1")
 
 file_path="$1"
+shift
 
 index=$(cat "$file_path" | cksum | awk 'BEGIN{FS=" ";}{print $1;}' | xargs printf "%x\n")
 
