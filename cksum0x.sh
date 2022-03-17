@@ -2,8 +2,8 @@
 # =========================================================================
 # cksum0x.sh                                   Copyright 2022 Erwann Rogard
 #                                                                  GPL v3.0
-# Syntax:     ./cksum0x.sh <file> ...
-# Output:     hexa of cksum of <file>
+# Syntax:      ./cksum0x.sh <file> ...
+# Output:      hexa of cksum of <file>
 # =========================================================================
 this="${BASH_SOURCE[0]}"
 this_dir=$(dirname "$this")
@@ -22,7 +22,7 @@ do
     case ${1} in
         ( '--help' ) help; exit 0;;
         ( '-*' )
-        error_exit "$0 receives uknown option ${1}"
+        error_exit "$this receives uknown option ${1}"
         exit 1;;
         *) operands+=("${1}");;
     esac
