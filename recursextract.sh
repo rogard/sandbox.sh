@@ -2,12 +2,13 @@
 # =========================================================================
 # recursextract.sh                             Copyright 2022 Erwann Rogard
 #                                                                  GPL v3.0
-# Syntax:    ./recursextract.sh <ante args> -- <path> ...
-# Semantics: checks if <path> =~ tar.gz; if applicable extracts it and
-#            recurses; otherwise executes <ante args> <path>; repeats with
-#            the next path.
-# Use case   find <source_dir> -type f -print0 | xargs -0\
-#            ./recursextract.sh ./indexyfile.sh <target_directory> --
+# Syntax:     ./recursextract.sh <commands> -- <path> ...
+# Semantics: checks if <path> =~ tar.gz; if so, extracts it and recurses;
+#            else executes <commands> <path>; repeats with the next path.
+# Requires:  'error_exit' in the same directory
+# Use case:  find <source dir> -type f -print0 | xargs -0\
+#            ./recursextract.sh ./file_uid.sh <target dir> --
+# TODO:      - other compression protocols?
 # =========================================================================
 
 this="${BASH_SOURCE[0]}"
@@ -16,19 +17,19 @@ source "$this_dir"/error_exit
 
 help()
 {
-    echo "Syntax: ./recursextract.sh <ante args> -- <path> ..."
+    echo "Syntax: ./recursextract.sh <commands> -- <path> ..."
     echo "Options:"
     echo "  --help"   
     echo "Also see: the source file"
 }
 
-ante_args=()
+cmd_ar=()
 while (( $# > 0 ))
 do
     case ${1} in
         ( '--help' ) help; exit;;
         ( '--' ) shift; break ;;
-        ( * ) ante_args+=("$1"); shift;;
+        ( * ) cmd_ar+=("$1"); shift;;
     esac
 done
 
@@ -57,10 +58,10 @@ then
 
     tar -xvzf "$path" --directory="$dir_tmp" 1>/dev/null
 
-    find "$dir_tmp" -type f -print0 | xargs -0 "$this" "${ante_args[@]}" --
+    find "$dir_tmp" -type f -print0 | xargs -0 "$this" "${cmd_ar[@]}" --
 
 else
-    "${ante_args[@]}" "$path"
+    "${cmd_ar[@]}" "$path"
 fi
 
-(( $# == 0 )) || "$this" "${ante_args[@]}" -- "$@"
+(( $# == 0 )) || "$this" "${cmd_ar[@]}" -- "$@"

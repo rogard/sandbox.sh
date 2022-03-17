@@ -1,4 +1,17 @@
 #! /usr/bin/env bash
+# =========================================================================
+# file_uid.sh                                  Copyright 2022 Erwann Rogard
+#                                                                  GPL v3.0
+# Syntax:    ./file_uid.sh <target_dir> <file> ...
+# Semantics: uid<--algorithm(<file path>); creates the following:
+#            <target_dir>/{file,.info/stat}
+#            Repeats with the next file.
+# Options:   Syntax                Default
+#            --copy=true|false
+#            --uid-gen=<script>    cksum0x.sh
+#            --info-name=<string>  .info
+# Use case:  find <source> -type f -print0 | xargs -0 ./file_uid.sh <target>
+# =========================================================================
 this="${BASH_SOURCE[0]}"
 this_dir=$(dirname "$bash_source")
 source "$this_dir"/error_exit
@@ -8,18 +21,8 @@ info_name=".info"
 
 help()
 {
-    echo "Syntax: indexifyle.sh target_dir file1 ..."
-    printf "%s "\
-           "Semantics: assigns to file1 a unique id; updates target_dir with a directory named after that id, target_id; "\
-           "target_id contains:"\
-           "a file having the same content as file1, and a directory named 'info'. "\
-           "Repeats with the next file."
-    echo "Options:"
-    printf "  --%s\n"\
-           "copy=       true|false  "\
-           "id-gen=     script      cksum0x.sh"\
-           "info-name=  script      .info"
-    echo "Example: find source_dir -type f -print0 | xargs -0 ./indexify.sh target_dir"
+    echo "Syntax: file_uid.sh <target_dir> <file> ..."
+    echo "Also see: source file"
 }
 
 operands=()
