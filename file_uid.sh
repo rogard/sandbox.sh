@@ -3,8 +3,8 @@
 # file_uid.sh                                  Copyright 2022 Erwann Rogard
 #                                                                  GPL v3.0
 # Syntax:    ./file_uid.sh <target_dir> <file> ...
-# Semantics: uid<--algorithm(<file path>); creates the following:
-#            <target_dir>/{file,.info/stat}
+# Semantics: uid:= 'uid-gen file'; creates the following:
+#            <target_dir>/uid/{file,.info/stat}
 #            Repeats with the next file.
 # Options:   Syntax                Default
 #            --copy=true|false
@@ -15,7 +15,10 @@
 this="${BASH_SOURCE[0]}"
 this_dir=$(dirname "$bash_source")
 source "$this_dir"/error_exit
-id_gen="$this_dir"/cksum0x.sh
+id_gen="$this_dir/cksum0x.sh "'$1'
+
+# "$SHELL" -c "$id_gen" "$SHELL" "$2"
+
 bool_copy=1
 info_name=".info"
 
@@ -46,24 +49,27 @@ do
 done
 set -- "${operands[@]}"
 
-[[ -d "$1" ]] || error_exit "$1 is not a directory"
+# printf "%s\n" "$@"
+
+[[ -d "$1" ]] || error_exit "$0 expects a directory; got $1"
 
 target_dir="$1"
 shift
 
-[[ -f "$1" ]] || error_exit "$1 is not a file"
+[[ -f "$1" ]] || error_exit "$0 expects a file; got $1"
 
 path="$1"
 shift
 
-id=$("$id_gen" "$path")
+id=$("$SHELL" -c "$id_gen" "$SHELL" "$path") || error_exit "$this->$id"
+
 target_id="$target_dir/$id"
 target_info="$target_id/$info_name"
 target_stat="$target_info/stat"
 
 mkdir -p "$target_info"\
-    && touch "$target_stat"
- grep -vf "$target_stat" <(stat "$path") >> "$target_stat"
+    && touch "$target_stat"\
+    && grep -vf "$target_stat" <(stat "$path") >> "$target_stat"
 
 if
     (( bool_copy == 0 ))\
