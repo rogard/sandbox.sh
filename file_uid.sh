@@ -2,29 +2,28 @@
 # =========================================================================
 # file_uid.sh                                  Copyright 2022 Erwann Rogard
 #                                                                  GPL v3.0
-# Syntax:    ./file_uid.sh <target_dir> <file> ...
-# Semantics: uid:= 'uuid-gen file'; creates the following:
-#            <target_dir>/uid/{file,.info/stat}
-#            Repeats with the next file.
+# Syntax:    ./file_uid.sh <target_root> <file> ...
+# Semantics: using generated uid for <file>, creates by default <target_root>\
+#            /uid/{file,.info/stat}; repeats with the next file.
 # Options:   Syntax                      Default
-#            --copy=true|false
-#            --uuid-gen='<command; ...>'  cksum0x.sh
-#            --info-name=<string>  .info
+#            --copy=true|false           true
+#            --rename=true|false         false
+#            --uid-gen='<command; ...>'  'cksum0x.sh $1'
+#            --info-name=<string>        .info
 # Use case:  find <source> -type f -print0 | xargs -0 ./file_uid.sh <target>
 # =========================================================================
 this="${BASH_SOURCE[0]}"
 this_dir=$(dirname "$bash_source")
 source "$this_dir"/error_exit
-uid_gen="$this_dir/cksum0x.sh "'$1'
+uid_gen="$this_dir"'/cksum0x.sh "$1";'
 
-# "$SHELL" -c "$uid_gen" "$SHELL" "$2"
-
-bool_copy=1
-info_name=".info"
+bool_copy=0
+bool_rename=1
+info_name='.info'
 
 help()
 {
-    echo "Syntax: file_uid.sh <target_dir> <file> ..."
+    echo "Syntax: file_uid.sh <target_root> <file> ..."
     echo "Also see: source file"
 }
 
@@ -42,6 +41,13 @@ do
             ( * ) error_exit "$this" "Wrong value for --copy=";;
         esac
         ;;
+        ( '--rename='* )
+        case ${1#*=} in
+            ( 'false' ) bool_rename=1;;
+            ( 'true' ) bool_rename=0;;
+            ( * ) error_exit "$this" "Wrong value for --copy=";;
+        esac
+        ;;
         ( '-'* ) error_exit "$this" "Wrong option" "$1";;
         ( * ) operands+=( "$1" );;
     esac
@@ -49,11 +55,9 @@ do
 done
 set -- "${operands[@]}"
 
-# printf "%s\n" "$@"
-
 [[ -d "$1" ]] || error_exit "$0 expects a directory; got $1"
 
-target_dir="$1"
+target_root="$1"
 shift
 
 [[ -f "$1" ]] || error_exit "$0 expects a file; got $1"
@@ -63,19 +67,38 @@ shift
 
 id=$("$SHELL" -c "$uid_gen" "$SHELL" "$path") || error_exit "$this->$id"
 
-target_id="$target_dir/$id"
-target_info="$target_id/$info_name"
+target_dir="$target_root/$id"
+target_info="$target_dir/$info_name"
 target_stat="$target_info/stat"
+target_path="$target_dir"/$(basename "$path")
 
 mkdir -p "$target_info"\
     && touch "$target_stat"\
     && grep -vf "$target_stat" <(stat "$path") >> "$target_stat"
 
 if
-    (( bool_copy == 0 ))\
-        || [[ -z $(find "$target_id" -maxdepth 1 -type f -print -quit) ]]
+    (( bool_copy == 0 ))
 then
-    cp "$path" "$target_id"
+
+    mapfile -d '' array < <(find "$target_dir" -maxdepth 1 -type f -size +0 -print0)
+    for other_path in "${array[@]}"
+    do
+        other_id=$("$SHELL" -c "$uid_gen" "$SHELL" "$other_path") || error_exit "$this->$other_id"
+        
+        if [[ $other_id == $id ]]
+        then
+            if (( bool_rename == 0 ))
+            then
+                [[ "$other_path" == "$target_path" ]] || mv "$other_path" "$target_path"
+            fi
+            bool_copy=1 # cancel copy
+            break
+        fi
+    done    
+    if (( bool_copy == 0 ))
+    then
+        cp "$path" "$target_dir"
+    fi
 fi
 
-(( $# == 0 )) || "$this" "$target_dir" "$@"
+(( $# == 0 )) || "$this" "$target_root" "$@"
