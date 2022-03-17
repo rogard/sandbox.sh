@@ -3,21 +3,21 @@
 # file_uid.sh                                  Copyright 2022 Erwann Rogard
 #                                                                  GPL v3.0
 # Syntax:    ./file_uid.sh <target_dir> <file> ...
-# Semantics: uid:= 'uid-gen file'; creates the following:
+# Semantics: uid:= 'uuid-gen file'; creates the following:
 #            <target_dir>/uid/{file,.info/stat}
 #            Repeats with the next file.
-# Options:   Syntax                Default
+# Options:   Syntax                      Default
 #            --copy=true|false
-#            --uid-gen=<script>    cksum0x.sh
+#            --uuid-gen='<command; ...>'  cksum0x.sh
 #            --info-name=<string>  .info
 # Use case:  find <source> -type f -print0 | xargs -0 ./file_uid.sh <target>
 # =========================================================================
 this="${BASH_SOURCE[0]}"
 this_dir=$(dirname "$bash_source")
 source "$this_dir"/error_exit
-id_gen="$this_dir/cksum0x.sh "'$1'
+uid_gen="$this_dir/cksum0x.sh "'$1'
 
-# "$SHELL" -c "$id_gen" "$SHELL" "$2"
+# "$SHELL" -c "$uid_gen" "$SHELL" "$2"
 
 bool_copy=1
 info_name=".info"
@@ -33,7 +33,7 @@ while (( ${#} > 0 ))
 do
     case ${1} in
         ( '--help' ) help; exit 0;;
-        ( '--id-gen='* ) id_gen="${1#*=}";;
+        ( '--uid-gen='* ) uid_gen="${1#*=}";;
         ( '--info-name='* ) info_name="${1#*=}";;
         ( '--copy='* )
         case ${1#*=} in
@@ -61,7 +61,7 @@ shift
 path="$1"
 shift
 
-id=$("$SHELL" -c "$id_gen" "$SHELL" "$path") || error_exit "$this->$id"
+id=$("$SHELL" -c "$uid_gen" "$SHELL" "$path") || error_exit "$this->$id"
 
 target_id="$target_dir/$id"
 target_info="$target_id/$info_name"
