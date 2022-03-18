@@ -11,9 +11,7 @@ source "$this_dir"/error_exit
 
 help()
 {
-    echo "Syntax: cksum0x.sh <file> ..."
-    echo "Also see: source file"
-    echo
+    sed -n '/^# ===/,/^# ===/p' "$this"
 }
 
 operands=()

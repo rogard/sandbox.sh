@@ -8,7 +8,7 @@
 # Options:   Syntax                      Default
 #            --copy=true|false           true
 #            --rename=true|false         false
-#            --uid-gen='<command; ...>'  'cksum0x.sh $1'
+#            --uid-gen='<command; ...>'  cksum0x.sh "$1";
 #            --info-name=<string>        .info
 # Use case:  find <source> -type f -print0 | xargs -0 ./file_uid.sh <target>
 # =========================================================================
@@ -23,8 +23,7 @@ info_name='.info'
 
 help()
 {
-    echo "Syntax: file_uid.sh <target_root> <file> ..."
-    echo "Also see: source file"
+    sed -n '/^# ===/,/^# ===/p' "$this"
 }
 
 operands=()

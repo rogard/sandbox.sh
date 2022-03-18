@@ -2,10 +2,9 @@
 # =========================================================================
 # recursextract.sh                             Copyright 2022 Erwann Rogard
 #                                                                  GPL v3.0
-# Syntax:     ./recursextract.sh <commands> -- <path> ...
+# Syntax:    ./recursextract.sh <command list;> -- <path> ...
 # Semantics: checks if <path> =~ tar.gz; if so, extracts it and recurses;
-#            else executes <commands> <path>; repeats with the next path.
-# Requires:  'error_exit' in the same directory
+#            else executes <command list;> <path>; repeats with the next path.
 # Use case:  find <source dir> -type f -print0 | xargs -0\
 #            ./recursextract.sh ./file_uid.sh <target dir> --
 # TODO:      - other compression protocols?
@@ -17,28 +16,30 @@ source "$this_dir"/error_exit
 
 help()
 {
-    echo "Syntax: ./recursextract.sh <commands> -- <path> ..."
-    echo "Options:"
-    echo "  --help"   
-    echo "Also see: the source file"
+    sed -En '/^# ====/,/^# ====/p' "$this" 
 }
 
-cmd_ar=()
-while (( $# > 0 ))
+operands=()
+while IFS=; (( $# > 0 ))
 do
     case ${1} in
         ( '--help' ) help; exit;;
-        ( '--' ) shift; break ;;
-        ( * ) cmd_ar+=("$1"); shift;;
+        ( * ) operands+=("${1}"); shift;;
     esac
 done
+set -- "${operands[@]}"
 
-if
-    (( $# == 0 ))
-then
-    exit 0
+if (( $# < 2 ))
+   then
+   error_exit\
+       $(printf "%s\n"\
+       ""\
+       "$this expects at least two arguments; "\
+       "got: '$@'")
 fi
 
+command_list="$1"
+shift
 path="$1"
 shift
 
@@ -61,7 +62,7 @@ then
     find "$dir_tmp" -type f -print0 | xargs -0 "$this" "${cmd_ar[@]}" --
 
 else
-    "${cmd_ar[@]}" "$path"
+    "$SHELL" -c "$command_list" "$SHELL" "$path"
 fi
 
 (( $# == 0 )) || "$this" "${cmd_ar[@]}" -- "$@"
