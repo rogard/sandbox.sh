@@ -4,7 +4,7 @@
 #                                                                  GPL v3.0
 # Syntax:    ./recursextract.sh <command list;> -- <path> ...
 # Semantics: checks if <path> =~ tar.gz; if so, extracts it and recurses;
-#            else executes <command list;> <path>; repeats with the next path.
+#            else executes <command list;> <path>; repeats, next path.
 # Use case:  find <source dir> -type f -print0 | xargs -0\
 #            ./recursextract.sh ./file_uid.sh <target dir> --
 # TODO:      - other compression protocols?
@@ -38,31 +38,33 @@ if (( $# < 2 ))
        "got: '$@'")
 fi
 
-command_list="$1"
+command_list="${1}"
 shift
+
 path="$1"
 shift
 
 if
     [[ $path =~ .tar.gz$ ]]
 then
-
+    : 
     # <div>
     # https://stackoverflow.com/a/53063602/9243116
     dir_tmp=$(mktemp -d)
 
     [[ -d "$dir_tmp" ]] || error_exit "$this" "$dir_tmp"
 
-    trap "exit 1"           HUP INT PIPE QUIT TERM
+    trap 'error_exit "$this" "$@"' HUP INT PIPE QUIT TERM
     trap 'rm -rf "$dir_tmp"' EXIT
     # </div>
 
     tar -xvzf "$path" --directory="$dir_tmp" 1>/dev/null
 
-    find "$dir_tmp" -type f -print0 | xargs -0 "$this" "${cmd_ar[@]}" --
+    find "$dir_tmp" -type f -print0 | xargs -0 "$this" "$command_list" "$@"
 
 else
+    echo "$command_list"
     "$SHELL" -c "$command_list" "$SHELL" "$path"
 fi
 
-(( $# == 0 )) || "$this" "${cmd_ar[@]}" -- "$@"
+(( $# == 0 )) || "$this" "$command_list" "$@"
