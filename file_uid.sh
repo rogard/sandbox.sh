@@ -5,13 +5,14 @@
 # Syntax:    ./file_uid.sh <target_root> <file> ...
 # Semantics: using generated uid for <file>, creates by default <target_root>\
 #            /uid/{file,.info/stat}; repeats with the next file.
-# Options:   Syntax                      Default
-#            --copy=true|false           true
-#            --rename=true|false         false
-#            --uid-gen='<command; ...>'  cksum0x.sh "$1";
-#            --info-name=<string>        .info
-#            --info-add
-# Use case:  find <source> -type f -print0 | xargs -0 ./file_uid.sh <target>
+# Options:
+#     Syntax                     Default          $1         $2
+#     --copy=true|false          true
+#     --rename=true|false        false
+#     --uid-gen=<command; ...>   cksum0x.sh "$1"; <file>
+#     --info-dir=<string>        .info            
+#     --info-do=<commad; ...>                     <info-dir> <target-stat>
+# Use case: find <source> -type f -print0 | xargs -0 ./file_uid.sh <target>
 # =========================================================================
 this="${BASH_SOURCE[0]}"
 this_dir=$(dirname "$bash_source")
@@ -20,7 +21,7 @@ uid_gen="$this_dir"'/cksum0x.sh "$1";'
 
 bool_copy=0
 bool_rename=1
-info_name='.info'
+info_dir='.info'
 
 help()
 {
@@ -33,8 +34,8 @@ do
     case ${1} in
         ( '--help' ) help; exit 0;;
         ( '--uid-gen='* ) uid_gen="${1#*=}";;
-        ( '--info-name='* ) info_name="${1#*=}";;
-        ( '--info-add='* ) info_add="${1#*=}";;
+        ( '--info-dir='* ) info_dir="${1#*=}";;
+        ( '--info-do='* ) info_do="${1#*=}";;
         ( '--copy='* )
         case ${1#*=} in
             ( 'false' ) bool_copy=1;;
@@ -66,10 +67,10 @@ shift
 path="$1"
 shift
 
-id=$("$SHELL" -c "$uid_gen" "$SHELL" "$path") || error_exit "$this->$id"
-
+id=$("$SHELL" -c "$uid_gen" "$SHELL" "$path")\
+    || error_exit "$this->$id"
 target_dir="$target_root/$id"
-target_info="$target_dir/$info_name"
+target_info="$target_dir/$info_dir"
 target_stat="$target_info/stat"
 target_path="$target_dir"/$(basename "$path")
 
@@ -77,7 +78,7 @@ mkdir -p "$target_info"\
     && touch "$target_stat"\
     && grep -vf "$target_stat" <(stat "$path") >> "$target_stat"
 
-[[ -z "$info_add" ]] || echo "$info_add" >> "$target_stat"
+[[ -z "$info_do" ]] || "$SHELL" -c "$info_do" "$SHELL" "$target_info" "$target_stat"
 
 if
     (( bool_copy == 0 ))
