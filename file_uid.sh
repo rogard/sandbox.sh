@@ -10,6 +10,7 @@
 #            --rename=true|false         false
 #            --uid-gen='<command; ...>'  cksum0x.sh "$1";
 #            --info-name=<string>        .info
+#            --info-add
 # Use case:  find <source> -type f -print0 | xargs -0 ./file_uid.sh <target>
 # =========================================================================
 this="${BASH_SOURCE[0]}"
@@ -33,6 +34,7 @@ do
         ( '--help' ) help; exit 0;;
         ( '--uid-gen='* ) uid_gen="${1#*=}";;
         ( '--info-name='* ) info_name="${1#*=}";;
+        ( '--info-add='* ) info_add="${1#*=}";;
         ( '--copy='* )
         case ${1#*=} in
             ( 'false' ) bool_copy=1;;
@@ -74,6 +76,8 @@ target_path="$target_dir"/$(basename "$path")
 mkdir -p "$target_info"\
     && touch "$target_stat"\
     && grep -vf "$target_stat" <(stat "$path") >> "$target_stat"
+
+[[ -z "$info_add" ]] || echo "$info_add" >> "$target_stat"
 
 if
     (( bool_copy == 0 ))
