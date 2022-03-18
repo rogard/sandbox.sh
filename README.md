@@ -9,14 +9,4 @@ Check whether a file is compressed; if so, extract and recurse; otherwise create
 find <source> -type f -print0\
     | xargs -0 ./recursextract.sh './file_uid.sh <target> "$1"'
 ```
-Tracking file duplicates:
-```
-$ for uid in \<target\>/*;\
-do printf "%s\n" "$(basename $uid)"; \
-sed -n '/File:/p' "$uid/.info/stat"\
-| cut -c 9-\
-| tr "\n" "\0"\
-| xargs -0 printf \
-"    - %s\n"; done
-```
 

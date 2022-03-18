@@ -2,11 +2,11 @@
 # =========================================================================
 # recursextract.sh                             Copyright 2022 Erwann Rogard
 #                                                                  GPL v3.0
-# Syntax:    ./recursextract.sh <command list;> -- <path> ...
+# Syntax:    ./recursextract.sh <command list;> <path> ...
 # Semantics: checks if <path> =~ tar.gz; if so, extracts it and recurses;
 #            else executes <command list;> <path>; repeats, next path.
-# Use case:  find <source dir> -type f -print0 | xargs -0\
-#            ./recursextract.sh ./file_uid.sh <target dir> --
+# Use case:  find <source> -type f -print0\
+#               | xargs -0 ./recursextract.sh './file_uid.sh <target> "$1"'
 # TODO:      - other compression protocols?
 # =========================================================================
 
@@ -63,7 +63,6 @@ then
     find "$dir_tmp" -type f -print0 | xargs -0 "$this" "$command_list" "$@"
 
 else
-    echo "$command_list"
     "$SHELL" -c "$command_list" "$SHELL" "$path"
 fi
 
