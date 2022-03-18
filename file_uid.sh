@@ -2,9 +2,11 @@
 # =========================================================================
 # file_uid.sh                                  Copyright 2022 Erwann Rogard
 #                                                                  GPL v3.0
-# Syntax:    ./file_uid.sh <target_root> <file> ...
-# Semantics: using generated uid for <file>, creates by default <target_root>\
-#            /uid/{file,.info/stat}; repeats with the next file.
+# Syntax:    - ./file_uid.sh <target_root> <file> ...
+#            - ./file_uid.sh --print <target_root> ...
+# Semantics: - Creates by default <target_root>/uid/{file,.info/stat};
+#            repeats with the next file.
+#            - Prints '* uid\npath ...\n'
 # Options:
 #     Syntax                     Default          $1         $2
 #     --copy=true|false          true
@@ -22,10 +24,24 @@ uid_gen="$this_dir"'/cksum0x.sh "$1";'
 bool_copy=0
 bool_rename=1
 info_dir='.info'
+bool_print=1
 
 help()
 {
     sed -n '/^# ===/,/^# ===/p' "$this"
+}
+
+print()
+{
+    find "${1}" -mindepth 1 -maxdepth 1 -type d -print\
+        | while IFS= read uid
+    do
+        printf "* %s\n" $(basename "$uid"); 
+        sed -n '/File:/p' "$uid"/.info/stat\
+            | cut -c 9-\
+            | tr "\n" "\0"\
+            | xargs -0 printf "%s\n"
+    done
 }
 
 operands=()
@@ -33,6 +49,7 @@ while (( ${#} > 0 ))
 do
     case ${1} in
         ( '--help' ) help; exit 0;;
+        ( '--print'* ) bool_print=0;;
         ( '--uid-gen='* ) uid_gen="${1#*=}";;
         ( '--info-dir='* ) info_dir="${1#*=}";;
         ( '--info-do='* ) info_do="${1#*=}";;
@@ -62,6 +79,12 @@ set -- "${operands[@]}"
 target_root="$1"
 shift
 
+if (( $bool_print == 0 ))
+then
+    print "$target_root"
+    exit 0
+fi
+
 [[ -f "$1" ]] || error_exit "$0 expects a file; got $1"
 
 path="$1"
@@ -70,6 +93,7 @@ shift
 id=$("$SHELL" -c "$uid_gen" "$SHELL" "$path")\
     || error_exit "$this->$id"
 target_dir="$target_root/$id"
+
 target_info="$target_dir/$info_dir"
 target_stat="$target_info/stat"
 target_path="$target_dir"/$(basename "$path")
@@ -84,11 +108,11 @@ if
     (( bool_copy == 0 ))
 then
 
-    mapfile -d '' array < <(find "$target_dir" -maxdepth 1 -type f -size +0 -print0)
+    mapfile -d '' array < <(find "$target_dir" -maxdepth 1 -type f -print0)
     for other_path in "${array[@]}"
     do
         other_id=$("$SHELL" -c "$uid_gen" "$SHELL" "$other_path") || error_exit "$this->$other_id"
-        
+
         if [[ $other_id == $id ]]
         then
             if (( bool_rename == 0 ))
