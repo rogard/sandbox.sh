@@ -4,7 +4,7 @@ Small bash scripts
 
 ## Flat filing using a unique ID
 
-Create a dummy files:
+Create dummy files:
 ```
 $ export w_dir="$HOME"'/Desktop'
 $ mkdir -p "$w_dir"/{source,target}
@@ -25,7 +25,6 @@ $ find "$source" -type f -print0\
 Check the results
 ```
 $ tree -a "$target"
-$ tree -a "$target"
 /home/er/Desktop/target
 ├── f9e91852
 │   ├── bar2
@@ -38,7 +37,7 @@ $ tree -a "$target"
 
 4 directories, 4 files
 ```
-Print files by uid:
+Paths by uid:
 ```
 $ ./file_uid.sh --print "$target"
 * f9e91852
