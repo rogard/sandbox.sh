@@ -2,11 +2,49 @@
 
 Small bash scripts
 
-## Use case \#1
+## Flat filing using a unique ID
 
-Check whether a file is compressed; if so, extract and recurse; otherwise create in `<target>` a directory named `<uid>` containing by default a copy of that file and `<info>` that is updated each time a file matches that uid. 
+Create a dummy files:
 ```
-find <source> -type f -print0\
-    | xargs -0 ./recursextract.sh './file_uid.sh <target> "$1"'
+$ export w_dir="$HOME"'/Desktop'
+$ mkdir -p "$w_dir"/{source,target}
+$ export source="$w_dir/source"
+$ export target="$w_dir/target"
+$ echo "1" > "$source/foo"
+$ echo "2" > "$source/bar"
+$ cp "$source"/bar "$source"/bar2
+$ tar -czf "$source"/ar.tar.gz -C "$source" foo
+$ ls "$source"
+ar.tar.gz  bar  bar2  foo
 ```
+Process these files:
+```
+$ find "$source" -type f -print0\
+| xargs -0 './recursextract.sh' './file_uid.sh '"$target"'  "$1"'
+```
+Check the results
+```
+$ tree -a "$target"
+$ tree -a "$target"
+/home/er/Desktop/target
+├── f9e91852
+│   ├── bar2
+│   └── .info
+│       └── stat
+└── fb80eddb
+    ├── foo
+    └── .info
+        └── stat
 
+4 directories, 4 files
+```
+Print files by uid:
+```
+$ ./file_uid.sh --print "$target"
+* f9e91852
+     1	/home/er/Desktop/source/bar2
+     2	/home/er/Desktop/source/bar
+* fb80eddb
+     1	/home/er/Desktop/source/foo
+     2	/tmp/tmp.kesHeywEGs/foo
+```

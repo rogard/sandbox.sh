@@ -3,7 +3,7 @@
 # cksum0x.sh                                   Copyright 2022 Erwann Rogard
 #                                                                  GPL v3.0
 # Syntax:      ./cksum0x.sh <file> ...
-# Output:      hexa of cksum of <file>
+# Output:      hexa of cksum of <file>; repeats with the next file.
 # =========================================================================
 this="${BASH_SOURCE[0]}"
 this_dir=$(dirname "$this")

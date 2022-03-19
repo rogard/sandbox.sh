@@ -4,9 +4,8 @@
 #                                                                  GPL v3.0
 # Syntax:    - ./file_uid.sh <target_root> <file> ...
 #            - ./file_uid.sh --print <target_root> ...
-# Semantics: - Creates by default <target_root>/uid/{file,.info/stat};
+# Semantics: - By default, creates <target_root>/uid/{file,.info/stat};
 #            repeats with the next file.
-#            - Prints '* uid\npath ...\n'
 # Options:
 #     Syntax                     Default          $1         $2
 #     --copy=true|false          true
@@ -34,15 +33,15 @@ help()
 print()
 {
     target_dir="${1}"
-    printf "* %s\n" "$target_dir"
     find "$target_dir" -mindepth 1 -maxdepth 1 -type d -print\
         | while IFS= read uid
     do
-        printf "** %s\n" $(basename "$uid"); 
+        printf "* %s\n" $(basename "$uid"); 
         sed -n '/File:/p' "$uid"/.info/stat\
             | cut -c 9-\
             | tr "\n" "\0"\
-            | xargs -0 printf "%s\n"
+            | xargs -0 printf "%s\n"\
+            | cat -n
     done
 }
 
