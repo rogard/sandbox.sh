@@ -3,8 +3,9 @@
 # recursextract.sh                             Copyright 2022 Erwann Rogard
 #                                                                  GPL v3.0
 # Syntax:    ./recursextract.sh <command list;> <path> ...
-# Semantics: checks if <path> =~ tar.gz; if so, extracts it and recurses;
-#            else executes <command list;> <path>; repeats, next path.
+# Semantics: checks if <path> =~ tar.gz; if so, extracts its content,
+#            and recurses; else executes <command list;> <path>; repeats
+#            with the next path.
 # Use case:  find <source> -type f -print0\
 #               | xargs -0 ./recursextract.sh './file_uid.sh <target> "$1"'
 # TODO:      - other compression protocols?
@@ -45,9 +46,8 @@ path="$1"
 shift
 
 if
-    [[ $path =~ .tar.gz$ ]]
+    [[ ${path} =~ (\.tar.*|\.zip)$ ]]
 then
-    : 
     # <div>
     # https://stackoverflow.com/a/53063602/9243116
     dir_tmp=$(mktemp -d)
@@ -58,12 +58,16 @@ then
     trap 'rm -rf "$dir_tmp"' EXIT
     # </div>
 
-    tar -xvzf "$path" --directory="$dir_tmp" 1>/dev/null
+    case ${path} in 
+        ( *'.tar'*) tar -xvzf "${path}" --directory="$dir_tmp" 1>/dev/null;;
+        ( *'.zip') unzip -d "$dir_tmp" "${path}" 1>/dev/null;;
+        ( * )
+    esac
 
-    find "$dir_tmp" -type f -print0 | xargs -0 "$this" "$command_list" "$@"
+    find "$dir_tmp" -type f -print0 | xargs -0 -r "$this" "$command_list" "$@"
 
 else
-    "$SHELL" -c "$command_list" "$SHELL" "$path"
+    "$SHELL" -c "$command_list" "$SHELL" "${path}"
 fi
 
 (( $# == 0 )) || "$this" "$command_list" "$@"
