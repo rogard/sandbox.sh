@@ -12,5 +12,5 @@ $ sudo for script in *.sh; do chmod +x "$script"; done
 
 * `cksum0x.sh` hexa of checksum
 * `file_uid.sh` flat file using unique identifier
-* `file_ext.sh` file using extension
+* `file_ext.sh` flat file using extension
 * `recursextract_do.sh` if applicable extracts from archive and recurses, else executes user-supplied command.
