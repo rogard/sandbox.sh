@@ -2,12 +2,15 @@
 # =========================================================================
 # file_ext.sh                                  Copyright 2022 Erwann Rogard
 #                                                                  GPL v3.0
-# Syntax:    - ./file_ext.sh <target> <file.ext> ...
-# Semantics: - Copies the directory containing <file.ext> to <target>/<ext>
+# Syntax:    ./file_ext.sh <target> <file.ext> ...
+# Semantics: Copies the directory containing <file.ext> to <target>/<ext>
 # Options:            Default
 #   --depth=<integer> 1
 #   --no-ext=<string> no-ext
-# Status: ** not tested **
+# Use case:
+# $ find <source> -mindepth 2 -maxdepth 2\
+#    -type f size +0 -print0\
+#    | xargs -0 -n 1 ./file_ext.sh <target>
 # =========================================================================
 this="${BASH_SOURCE[0]}"
 this_dir=$(dirname "$bash_source")
@@ -40,20 +43,27 @@ do
 done
 set -- "${operands[@]}"
 
-[[ -d "$1" ]] || error_exit "$this expects a directory; got $1"
+[[ -d "$1" ]] || error_exit "$this expects a directory; $@"
 
 target_root="$1"
 shift
 
-[[ -f "$1" ]] || error_exit "$this expects a file; got $1"
+[[ -f "$1" ]] || error_exit "$this expects a file; got $@"
 
 source_file="$1"
 shift
 
-ext="${source_file##*.}"
-[[ -n $ext ]] || ext='no-ext'
+basn=$(basename "$source_file")
 
+if [[ $basn =~ \. ]]
+then
+    ext="${ba##*.}"
+else
+    ext='no-ext'
+fi
+    
 target="$target_root/$ext"
+
 mkdir -p "$target"
 source=$(dirname "$source_file")
 
