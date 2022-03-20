@@ -62,7 +62,7 @@ basen=$(basename "$source_file")
 # [[ $basen =~ \~ ]] || issue warning
 
 out=''
-(( bool_dir == 0 )) && out+="$dirn"
+(( bool_dir == 0 )) && out+="$dirn/"
 out+="${basen/\~/}"
 
 echo "$out"
