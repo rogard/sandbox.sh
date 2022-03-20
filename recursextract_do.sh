@@ -1,10 +1,10 @@
 #! /usr/bin/env bash
 # =========================================================================
-# recursextract.sh                             Copyright 2022 Erwann Rogard
+# recursextract_do.sh                          Copyright 2022 Erwann Rogard
 #                                                                  GPL v3.0
-# Syntax:    ./recursextract.sh <command list;> <path> ...
-# Semantics: checks if <path> =~ tar.gz; if so, extracts its content,
-#            and recurses; else executes <command list;> <path>; repeats
+# Syntax:    ./recursextract_do.sh <command list;> <path> ...
+# Semantics: checks if <path> =~ zip|tar.gz; extracts content and recurses;
+#            else executes <command list;> <path>; repeats
 #            with the next path.
 # Use case:  find <source> -type f -print0\
 #               | xargs -0 ./recursextract.sh './file_uid.sh <target> "$1"'

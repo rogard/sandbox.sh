@@ -2,17 +2,17 @@
 # =========================================================================
 # file_uid.sh                                  Copyright 2022 Erwann Rogard
 #                                                                  GPL v3.0
-# Syntax:    - ./file_uid.sh <target_root> <file> ...
-#            - ./file_uid.sh --print <target_root> ...
-# Semantics: - By default, creates <target_root>/uid/{file,.info/stat};
+# Syntax:    - ./file_uid.sh <target> <file> ...
+#            - ./file_uid.sh --print <target> ...
+# Semantics: - By default, creates <target>/uid/{file,.info/stat};
 #            repeats with the next file.
 # Options:
-#     Syntax                     Default          $1         $2
+#     Syntax                     Default          $@
 #     --copy=true|false          true
 #     --rename=true|false        false
 #     --uid-gen=<command; ...>   cksum0x.sh "$1"; <file>
 #     --info-dir=<string>        .info            
-#     --info-do=<commad; ...>                     <info-dir> <target-stat>
+#     --info-do=<command; ...>   update stat      <file><info-dir><stat>
 # Use case: find <source> -type f -print0 | xargs -0 ./file_uid.sh <target>
 # =========================================================================
 this="${BASH_SOURCE[0]}"
@@ -24,6 +24,7 @@ bool_copy=0
 bool_rename=1
 info_dir='.info'
 bool_print=1
+info_do='grep -vf "$3" <(stat "$1") >> "$3"'
 
 help()
 {
@@ -36,7 +37,7 @@ print()
     find "$target_dir" -mindepth 1 -maxdepth 1 -type d -print\
         | while IFS= read uid
     do
-        printf "* %s\n" $(basename "$uid"); 
+        printf "%s\n" $(basename "$uid"); 
         sed -n '/File:/p' "$uid"/.info/stat\
             | cut -c 9-\
             | tr "\n" "\0"\
@@ -106,10 +107,9 @@ else
     target_path="$target_dir"/$(basename "$path")
 
     mkdir -p "$target_info"\
-        && touch "$target_stat"\
-        && grep -vf "$target_stat" <(stat "$path") >> "$target_stat"
+        && touch "$target_stat"
 
-    [[ -z "$info_do" ]] || "$SHELL" -c "$info_do" "$SHELL" "$target_info" "$target_stat"
+    [[ -z "$info_do" ]] || "$SHELL" -c "$info_do" "$SHELL" "$path" "$target_info" "$target_stat"
 
     if
         (( bool_copy == 0 ))
