@@ -53,16 +53,17 @@ shift
 source_file="$1"
 shift
 
-basn=$(basename "$source_file")
+basen=$(basename "$source_file")
 
-if [[ $basn =~ \. ]]
+if [[ $basen =~ \. ]]
 then
-    ext="${ba##*.}"
+    ext="${basen##*.}"
 else
     ext='no-ext'
 fi
     
 target="$target_root/$ext"
+echo "$target"
 
 mkdir -p "$target"
 source=$(dirname "$source_file")
