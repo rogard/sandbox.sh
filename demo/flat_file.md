@@ -2,9 +2,7 @@
 
 Create files with redundancies:
 ```
-"$SHELL" << EOF
 export w_dir="$HOME"'/Desktop'
-rm -r "$w_dir"/{source,target}
 mkdir -p "$w_dir"/{source,target}
 export source="$w_dir"/source
 export target="$w_dir"/target
@@ -13,12 +11,10 @@ echo "2" > "$source"/bar.x
 cp "$source"/bar.x "$source"/bar.y
 tar -czf "$source"/ar.tar.gz -C "$source" foo
 ls "$source"
-EOF
 ```
-Flat file these files using uid
+Flat file these files using uid, collecting every empty file in enclosing directory, and copying them to `.info`
 ```
-$ find "$source" -type f -print0\
-  | xargs -0 './recursextract_do.sh' './file_uid.sh '"$target"'  "$1"'
+find "$source" -type f -size +0 -print0  | xargs -0 './recursextract_do.sh' './file_uid.sh --info-do+='\''find "$1" -size 0 -exec cp {} "$3" \;'\'' "$target"  "$1";'
 ```
 Check the results
 ```
@@ -44,7 +40,7 @@ fb80eddb
      1	/home/er/Desktop/source/foo
      2	/tmp/tmp.JvmGroBzcE/foo
 ```
-Paths by ext:
+Paths by extension
 ```
 $  mkdir -p "$w_dir/ext"
 $ ./file_ext.sh "$w_dir/ext" "$target/f9e91852/bar.y"
