@@ -2,29 +2,32 @@
 # =========================================================================
 # file_uid.sh                                  Copyright 2022 Erwann Rogard
 #                                                                  GPL v3.0
-# Syntax:    - ./file_uid.sh <target> <file> ...
-#            - ./file_uid.sh --print <target> ...
-# Semantics: - By default, creates <target>/uid/{file,.info/stat};
+# Syntax:    ./file_uid.sh <target> <source> ...
+#            ./file_uid.sh --print <target> ...
+# Semantics: Files <source> based on its unique identifier, inside <target>;
 #            repeats with the next file.
+#
 # Options:
-#     Syntax                     Default          $@
-#     --copy=true|false          true
-#     --rename=true|false        false
-#     --uid-gen=<command; ...>   cksum0x.sh "$1"; <file>
-#     --info-dir=<string>        .info            
-#     --info-do=<command; ...>   update stat      <file><info-dir><stat>
-# Use case: find <source> -type f -print0 | xargs -0 ./file_uid.sh <target>
+#  Syntax                         Default          $@
+#  --uid-gen=<command; ...>       cksum0x.sh "$1"; <source>
+#  --copy=true|false              true
+#  --info-dir=<string>            .info            
+#  --info-do+=<command; ...>                       <source><info-dir>
+# Use case:
+#   find <folder> -type f -print0\
+#      | xargs -0 ./file_uid.sh <target>
 # =========================================================================
 this="${BASH_SOURCE[0]}"
 this_dir=$(dirname "$bash_source")
 source "$this_dir"/error_exit
 uid_gen="$this_dir"'/cksum0x.sh "$1";'
 
-bool_copy=0
-bool_rename=1
 info_dir='.info'
+info_do='touch "$2/stat"; grep -vf "$2/stat" <(stat "$1") >> "$2/stat";'
+bool_copy=0
+target_prefix='prefix'
+
 bool_print=1
-info_do='grep -vf "$3" <(stat "$1") >> "$3"'
 
 help()
 {
@@ -34,6 +37,7 @@ help()
 print()
 {
     target_dir="${1}"
+    cp "$source" "$target_dir"
     find "$target_dir" -mindepth 1 -maxdepth 1 -type d -print\
         | while IFS= read uid
     do
@@ -56,10 +60,10 @@ do
         options+=( "${option}" )
         case ${option} in        
             ( '--help' ) help; exit 0;;
-            ( '--print'* ) bool_print=0;;
+            ( '--print'* ) bool_print=0; break;;
             ( '--uid-gen='* ) uid_gen="${1#*=}";;
             ( '--info-dir='* ) info_dir="${1#*=}";;
-            ( '--info-do='* ) info_do="${1#*=}";;
+            ( '--info-do+='* ) info_do+="${1#*=}";;
             ( '--copy='* )
             case ${1#*=} in
                 ( 'false' ) bool_copy=1;;
@@ -83,7 +87,7 @@ do
 done
 set -- "${operands[@]}"
 
-[[ -d "$1" ]] || error_exit "$0 expects a directory; got $1"
+[[ -d "$1" ]] || error_exit "$this expects a directory; got $1"
 
 target_root="$1"
 shift
@@ -93,48 +97,35 @@ then
     print "$target_root"
 else
     
-    [[ -f "$1" ]] || error_exit "$0 expects a file; got $1"
+    [[ -f "$1" ]] || error_exit "$this expects a file; got $1"
 
-    path="$1"
+#    trap 'error_exit "$this" "args=$@"' EXIT
+
+    source="$1"
     shift
 
-    id=$("$SHELL" -c "$uid_gen" "$SHELL" "$path")\
-        || error_exit "$this->$id"
-    target_dir="$target_root/$id"
-
+    target_id=$("$SHELL" -c "$uid_gen" "$SHELL" "$source")   
+    target_dir="$target_root/$target_id"
     target_info="$target_dir/$info_dir"
-    target_stat="$target_info/stat"
-    target_path="$target_dir"/$(basename "$path")
+    mkdir -p "$target_info"
+    [[ -z "$info_do" ]] || "$SHELL" -c "$info_do" "$SHELL" "$source" "$target_info"
 
-    mkdir -p "$target_info"\
-        && touch "$target_stat"
-
-    [[ -z "$info_do" ]] || "$SHELL" -c "$info_do" "$SHELL" "$path" "$target_info" "$target_stat"
-
+    target="$target_dir"
+    source_base=$(basename "$source")
+    target+="/$target_id"
+    mapfile -d '' array < <("$this_dir"/filename_split.sh "$source")
+    ext="${array[1]}"
     if
-        (( bool_copy == 0 ))
+        [[ -z "$ext" ]]
     then
-
-        mapfile -d '' array < <(find "$target_dir" -maxdepth 1 -type f -print0)
-        for other_path in "${array[@]}"
-        do
-            other_id=$("$SHELL" -c "$uid_gen" "$SHELL" "$other_path") || error_exit "$this->$other_id"
-
-            if [[ $other_id == $id ]]
-            then
-                if (( bool_rename == 0 ))
-                then
-                    [[ "$other_path" == "$target_path" ]] || mv "$other_path" "$target_path"
-                fi
-                bool_copy=1 # cancel copy
-                break
-            fi
-        done    
-        if (( bool_copy == 0 ))
-        then
-            cp "$path" "$target_dir"
-        fi
+        log="$target_info/log"
+        touch "$log"
+        printf "%s" $(date --iso-8601=minutes) >> "$log"
+        printf "\n%s\n" "Missing or uknown extension" >> "$log"
+    else
+        target+=".$ext"
     fi
+    cp -u "$source" "$target"
 fi
 
 (( $# == 0 )) || "$this" "${options[@]}" "$@"
