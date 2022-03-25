@@ -17,7 +17,7 @@
 # $ find '/home/er/Documents/record/BG' -type f -size +0 -print0\
 #    | xargs -0 './recursextract_do.sh' './file_by_uid.sh\
 #    --info-do+='\''find $(dirname "$1")-size 0 -exec cp {} "$2" \;'\''\
-#    '/home/er/uid'  "$1";'
+#    '/home/er/uid' "$1";'
 # =========================================================================
 this="${BASH_SOURCE[0]}"
 this_dir=$(dirname "$bash_source")
