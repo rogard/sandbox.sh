@@ -14,7 +14,8 @@ ls "$source"
 ```
 Flat file these files using uid, collecting every empty file in enclosing directory, and copying them to `.info`
 ```
-find "$source" -type f -size +0 -print0  | xargs -0 './recursextract_do.sh' './file_uid.sh --info-do+='\''find "$1" -size 0 -exec cp {} "$3" \;'\'' "$target"  "$1";'
+find "$source" -type f -size +0 -print0\
+    | xargs -0 './recursextract_do.sh' './file_by_uid.sh --info-do+='\''find "$1" -size 0 -exec cp {} "$3" \;'\'' "$target"  "$1";'
 ```
 Check the results
 ```
