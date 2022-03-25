@@ -24,7 +24,7 @@ this_dir=$(dirname "$bash_source")
 source "$this_dir"/error_exit
 uid_gen="$this_dir"'/cksum0x.sh "$1";'
 
-info_dir='.info'
+info_dir='info'
 info_do='touch "$2/stat"; grep -vf "$2/stat" <(stat "$1") >> "$2/stat";'
 bool_copy=0
 target_prefix='prefix'
