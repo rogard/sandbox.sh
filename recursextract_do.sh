@@ -5,8 +5,12 @@
 # Syntax:    ./recursextract_do.sh <command list;> <path> ...
 # Semantics: if applicable extracts from archive and recurses, else
 #            executes user-supplied command; repeats with the next path.
-# Use case:  find <source> -type f -print0\
-#               | xargs -0 ./recursextract.sh './file_uid.sh <target> "$1"'
+# Use case:
+# $ find <source directory> -type f -size +0 -print0\
+#    | xargs -0 './recursextract_do.sh' './file_by_uid.sh\
+#    --info-do+='\''find "$(dirname "${1}")"\
+#    -size 0 -exec cp {} "${2}" \;'\''\
+#    '<target dir>' "$1";'
 # =========================================================================
 
 this="${BASH_SOURCE[0]}"
